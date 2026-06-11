@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>TCS Verbal Ability - Fixed Full System</title>
+
+<style>
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  margin: 0;
+  background: linear-gradient(135deg, #eef2f7, #d9e4f5);
+}
+
+/* TOP BAR */
+#topBar {
+  background: linear-gradient(90deg, #0b3d91, #1e5eff);
+  color: white;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+#timer {
+  background: rgba(255,255,255,0.2);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+/* SECTIONS */
+.section { display: none; padding: 25px; }
+.active { display: block; }
+
+.card {
+  background: rgba(255,255,255,0.95);
+  padding: 25px;
+  margin: 20px auto;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  max-width: 850px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+textarea { height: 180px; }
+
+button {
+  padding: 12px 20px;
+  background: linear-gradient(90deg, #0b3d91, #1e5eff);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  margin-top: 15px;
+  cursor: pointer;
+}
+
+button:hover {
+  transform: scale(1.02);
+}
+
+p { color: #333; line-height: 1.6; }
+
+</style>
+</head>
+
+<body>
+
+<div id="topBar">
+  <div>📘 TCS Verbal Ability</div>
+  <div id="timer">Time: --</div>
+</div>
+
+<!-- START -->
+<div id="start" class="section active">
+  <div class="card">
+    <h2>Start Exam</h2>
+    <button onclick="startExam()">Begin</button>
+  </div>
+</div>
+
+<!-- MCQ -->
+<div id="mcq" class="section">
+  <div class="card">
+    <h2>Fill in the Blanks</h2>
+    <p id="qText"></p>
+    <input id="ans">
+    <button onclick="nextQ()">Next</button>
+  </div>
+</div>
+
+<!-- PASSAGE -->
+<div id="passage" class="section">
+  <div class="card">
+    <h2>Passage Writing</h2>
+
+    <h3>📖 Read (30 sec)</h3>
+    <p>
+     Renewable energy sources such as solar, wind, and hydroelectric power are gaining popularity worldwide. Unlike fossil fuels, renewable resources produce minimal greenhouse gas emissions and are sustainable over the long term. Governments are investing heavily in clean energy infrastructure to combat climate change and reduce dependence on imported fuels. Although installation costs can be significant initially, technological advancements continue to improve efficiency and affordability.
+    </p>
+
+    <h3 id="passageStatus">Reading Time: 30 sec</h3>
+
+    <textarea id="passageAns" disabled></textarea>
+
+    <button onclick="startEmail()">Next Section</button>
+  </div>
+</div>
+
+<!-- EMAIL -->
+<div id="email" class="section">
+  <div class="card">
+    <h2>Email Writing Task</h2>
+
+    <p>
+As a recent buyer of their car, write an email to the Manager of Smart Automotive company, Mr.Ahmed, regarding the poor quality of service facility available in the city. Sign the email as Chopra.
+Outline: very few – service centers – complaints – pending problems – maintenance – cost – time – delivery – increase – customer satisfaction.     </p>
+
+    <h3 id="emailTimer">9:00</h3>
+
+    <textarea id="emailAns"></textarea>
+
+    <button onclick="finishExam()">Submit Exam</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="section">
+  <div class="card">
+    <h2>Result</h2>
+    <p id="score"></p>
+  </div>
+</div>
+
+<script>
+
+/* DATA */
+let index = 0;
+let timer;
+let mcqTime = 30;
+let readTime = 30;
+let writeTime = 90;
+let emailTime = 540;
+
+let answers = [];
+
+const questions = [
+"The artist's work was praised for its ________ depiction of human emotions.",
+"Frequent policy changes have led to ________ in the industry.",
+"She has a remarkable ability to ________ complex ideas into simple terms.",
+"The company's profits continued to ________ despite market challenges.",
+"His ________ remarks offended several members of the audience.",
+"The treaty was signed to ________ peace between the warring nations.",
+"The detective's ________ investigation uncovered hidden truths.",
+"The new initiative aims to ________ digital literacy among rural populations.",
+"The artist's latest exhibition received ________ reviews from critics.",
+"The storm caused ________ damage to the coastal regions.",
+"He remained ________ even when faced with harsh criticism.",
+"The committee will ________ the matter before reaching a final decision.",
+"The memoir offers a ________ account of the author's life experiences.",
+"The lack of proper planning led to ________ delays in the project.",
+"Her ________ personality made her popular among her peers.",
+"The government introduced measures to ________ inflation.",
+"The speaker's ________ delivery captivated the entire auditorium.",
+"The findings were considered ________ and required further verification.",
+"The teacher encouraged students to think ________ and challenge assumptions.",
+"The merger is expected to ________ new opportunities for growth."
+];
+
+const correct3 = [
+"poignant","uncertainty","judicious","irrefutable","atone",
+"comprehensive","strained","astute","alleviate","evasive",
+"enforce","resolute","inherent","camaraderie","preposterous",
+"dispel","pragmatic","conclusive","belligerent","insights"
+];
+
+/* NAV */
+function show(id){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+/* START */
+function startExam(){
+  index = 0;
+  answers = [];
+  show("mcq");
+  loadQ();
+}
+
+/* MCQ */
+function loadQ(){
+  document.getElementById("qText").innerText =
+    (index+1) + ". " + questions[index];
+
+  document.getElementById("ans").value = "";
+  mcqTime = 30;
+
+  clearInterval(timer);
+
+  timer = setInterval(()=>{
+    mcqTime--;
+    document.getElementById("timer").innerText = "Time: " + mcqTime;
+
+    if(mcqTime <= 0) nextQ();
+  },1000);
+}
+
+function nextQ(){
+  answers[index] = document.getElementById("ans").value.toLowerCase().trim();
+  clearInterval(timer);
+
+  index++;
+
+  if(index < questions.length){
+    loadQ();
+  } else {
+    startPassage();
+  }
+}
+
+/* PASSAGE */
+function startPassage(){
+  show("passage");
+
+  readTime = 30;
+  writeTime = 90;
+  let phase = "read";
+
+  document.getElementById("passageAns").disabled = true;
+
+  timer = setInterval(()=>{
+
+    if(phase === "read"){
+      readTime--;
+      if(readTime <= 0){
+        phase = "write";
+        document.getElementById("passageAns").disabled = false;
+      }
+    } else {
+      writeTime--;
+      if(writeTime <= 0){
+        clearInterval(timer);
+        document.getElementById("passageAns").disabled = true;
+      }
+    }
+
+  },1000);
+}
+
+/* EMAIL */
+function startEmail(){
+  show("email");
+  emailTime = 540;
+
+  clearInterval(timer);
+
+  timer = setInterval(()=>{
+    emailTime--;
+
+    let m = Math.floor(emailTime/60);
+    let s = emailTime%60;
+
+    document.getElementById("emailTimer").innerText =
+      m + ":" + (s<10?"0"+s:s);
+
+    if(emailTime <= 0){
+      clearInterval(timer);
+      document.getElementById("emailAns").disabled = true;
+    }
+  },1000);
+}
+
+/* RESULT FIXED */
+function finishExam(){
+  clearInterval(timer);
+
+  let score = 0;
+
+  for(let i=0;i<correct3.length;i++){
+    if(answers[i] === correct3[i]) score++;
+  }
+
+  show("result");
+
+  document.getElementById("score").innerText =
+    "MCQ Score: " + score + " / 20";
+}
+
+</script>
+
+</body>
+</html>
